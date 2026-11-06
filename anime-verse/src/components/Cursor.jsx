@@ -1,83 +1,73 @@
-import { useEffect, useRef, useState } from 'react'
+// anime-verse/src/components/Cursor.jsx
+import React, { useEffect, useState } from 'react';
 
-export default function Cursor() {
-  const cursor = useRef(null)
-  const [isMobile, setIsMobile] = useState(false)
+/**
+ * Premium Mihir-Style Smooth Custom Cursor Component
+ * Optimized using pure CSS variables for lag-free rendering.
+ * Automatically hidden on mobile devices to prevent touch interaction bugs.
+ */
+const Cursor = () => {
+  const [position, setMemoPosition] = useState({ x: -100, y: -100 });
+  const [isHovered, setIsHovered] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 768px)')
-    const update = () => setIsMobile(!!mq.matches)
-    update()
+    // 1. Mobile aur Tablets par custom cursor disable karein (UX Rule)
+    if (window.innerWidth < 768) return;
 
-    // Safari/old browsers: prefer addListener/removeListener fallback
-    if (mq.addEventListener) mq.addEventListener('change', update)
-    else mq.addListener(update)
+    setIsVisible(true);
+
+    const handleMouseMove = (e) => {
+      setMemoPosition({ x: e.clientX, y: e.clientY });
+    };
+
+    // 2. Clickable items (buttons, links, cards) par hover detect karein
+    const handleMouseOver = (e) => {
+      if (e.target.closest('a') || e.target.closest('button') || e.target.closest('[role="button"]') || e.target.closest('.hover-target')) {
+        setIsHovered(true);
+      } else {
+        setIsHovered(false);
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseover', handleMouseOver);
 
     return () => {
-      if (mq.removeEventListener) mq.removeEventListener('change', update)
-      else mq.removeListener(update)
-    }
-  }, [])
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseover', handleMouseOver);
+    };
+  }, []);
 
-  useEffect(() => {
-    if (isMobile) return
-
-    let x = 0, y = 0
-    let cx = 0, cy = 0
-
-    const move = (e) => {
-      x = e.clientX
-      y = e.clientY
-    }
-
-    window.addEventListener('mousemove', move)
-
-    const animate = () => {
-      cx += (x - cx) * 0.15
-      cy += (y - cy) * 0.15
-
-      if (cursor.current) {
-        cursor.current.style.transform = `translate(${cx}px, ${cy}px)`
-      }
-
-      requestAnimationFrame(animate)
-    }
-
-    requestAnimationFrame(animate)
-
-    return () => window.removeEventListener('mousemove', move)
-  }, [isMobile])
+  if (!isVisible) return null;
 
   return (
     <>
-      {!isMobile && (
-        <>
-          {/* Single soft cursor */}
-          <div
-            ref={cursor}
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-
-              width: 18,
-              height: 18,
-              background: 'var(--primary)',
-              borderRadius: '50%',
-              pointerEvents: 'none',
-              zIndex: 9999,
-              transform: 'translate(-50%, -50%)',
-              boxShadow: '0 0 12px rgba(230,57,70,0.6)',
-              transition: 'transform 0.05s linear'
-            }}
-          />
-
-          {/* hide default cursor */}
-          <style>{`
-            * { cursor: none !important; }
-          `}</style>
-        </>
-      )}
+      {/* Central Core Dot */}
+      <div
+        className="pointer-events-none fixed z-[9999] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white transition-all duration-75"
+        style={{
+          left: `${position.x}px`,
+          top: `${position.y}px`,
+          width: isHovered ? '4px' : '8px',
+          height: isHovered ? '4px' : '8px',
+        }}
+      />
+      
+      {/* Outer Fluid Ring (Nyx Glassmorphic Aesthetic) */}
+      <div
+        className="pointer-events-none fixed z-[9998] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/30 backdrop-invert-[0.1] transition-all duration-300 ease-out"
+        style={{
+          left: `${position.x}px`,
+          top: `${position.y}px`,
+          width: isHovered ? '50px' : '24px',
+          height: isHovered ? '50px' : '24px',
+          backgroundColor: isHovered ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+          borderColor: isHovered ? 'rgba(255, 255, 255, 0.6)' : 'rgba(255, 255, 255, 0.3)',
+        }}
+      />
     </>
-  )
-}
+  );
+};
+
+export default Cursor;
