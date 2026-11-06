@@ -1,0 +1,57 @@
+import { Link } from 'react-router-dom';
+
+export default function Footer() {
+  return (
+    <footer className="border-t border-white/5 bg-background pt-10 pb-12 mt-10 relative z-10">
+      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-10">
+        
+        {/* Brand */}
+        <div className="flex flex-col gap-3">
+          <Link to="/" className="inline-flex items-center gap-2 group">
+            <span className="font-black text-2xl tracking-tighter text-text">
+              ANIME<span className="text-primary group-hover:text-accent transition-colors">VERSE</span>
+            </span>
+          </Link>
+          <p className="text-muted text-sm leading-relaxed max-w-xs">
+            Discover anime from around the world. The ultimate premium anime discovery platform.
+          </p>
+          <p className="text-xs text-muted/70">
+            Created by <span className="text-primary font-semibold">Kaniz Fatima Khan</span>
+          </p>
+        </div>
+
+        {/* Links */}
+        <div>
+          <h3 className="font-bold tracking-wider text-text mb-4 uppercase text-xs">Navigate</h3>
+          <ul className="flex flex-col gap-2.5">
+            {[['/', 'Home'], ['/genres', 'Genres'], ['/watchlist', 'Watchlist'], ['/search', 'Search']].map(([path, label]) => (
+              <li key={path}>
+                <Link to={path} className="text-muted hover:text-primary transition-colors text-sm">
+                  {label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Info */}
+        <div>
+          <h3 className="font-bold tracking-wider text-text mb-4 uppercase text-xs">About</h3>
+          <p className="text-muted text-sm leading-relaxed mb-3">
+            AnimeVerse is a modern anime discovery platform built for fans. Explore trending series, genres, and detailed anime information in one place.
+          </p>
+          <p className="text-xs text-muted/50">
+            Powered by Jikan API · Updated regularly for anime lovers
+          </p>
+        </div>
+      </div>
+
+      {/* Bottom Bar */}
+      <div className="max-w-7xl mx-auto px-6 mt-10 pt-6 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
+        <p className="text-muted/50 text-xs">
+          © {new Date().getFullYear()} AnimeVerse. All rights reserved.
+        </p>
+      </div>
+    </footer>
+  );
+}
