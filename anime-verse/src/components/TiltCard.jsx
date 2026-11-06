@@ -1,171 +1,60 @@
-import { useRef } from 'react'
-import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { useWatchlist } from '../hooks/useWatchlist'
+// anime-verse/src/components/TiltCard.jsx
+import React, { useState, useRef } from 'react';
 
-export default function TiltCard({ anime, index = 0 }) {
-  const cardRef = useRef(null)
-  const glowRef = useRef(null)
-  const { add, remove, isIn } = useWatchlist()
-  const inList = isIn(anime.mal_id)
+const TiltCard = ({ children, className = "" }) => {
+  const cardRef = useRef(null);
+  const [rotateX, setRotateX] = useState(0);
+  const [rotateY, setRotateY] = useState(0);
 
+  // Desktop viewport par mouse move handle karne ke liye (3D effect)
   const handleMouseMove = (e) => {
-    const card = cardRef.current
-    if (!card) return
+    const card = cardRef.current;
+    if (!card) return;
 
-    const rect = card.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
-    const cx = rect.width / 2
-    const cy = rect.height / 2
+    // Mobile screens par performance bachane ke liye tilt calculations skip karein
+    if (window.innerWidth < 768) return;
 
-    const rotX = ((y - cy) / cy) * -12
-    const rotY = ((x - cx) / cx) * 12
+    const box = card.getBoundingClientRect();
+    const x = e.clientX - box.left - box.width / 2;
+    const y = e.clientY - box.top - box.height / 2;
 
-    card.style.transform =
-      `perspective(800px) rotateX(${rotX}deg) rotateY(${rotY}deg) scale3d(1.04,1.04,1.04)`
+    // Standard tilt constraints (-15deg to 15deg max)
+    setRotateX(-y / (box.height / 30));
+    setRotateY(x / (box.width / 30));
+  };
 
-    if (glowRef.current) {
-      glowRef.current.style.background =
-        `radial-gradient(circle at ${x}px ${y}px,
-        rgba(0,168,232,0.18),
-        transparent 60%)`
-    }
-  }
-
+  // Mouse leave hone par variables ko smoothly normal 0 par reset karein
   const handleMouseLeave = () => {
-    if (cardRef.current) {
-      cardRef.current.style.transform =
-        'perspective(800px) rotateX(0deg) rotateY(0deg) scale3d(1,1,1)'
-    }
-
-    if (glowRef.current) {
-      glowRef.current.style.background = 'transparent'
-    }
-  }
+    setRotateX(0);
+    setRotateY(0);
+  };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.04, duration: 0.5 }}
-      style={{ position: 'relative' }}
+    <div
+      ref={cardRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
+        transition: 'transform 0.1s ease-out',
+      }}
+      className={`
+        relative overflow-hidden rounded-2xl 
+        border border-white/10 bg-zinc-900/40 backdrop-blur-md 
+        p-5 text-white shadow-2xl transition-all duration-300 
+        hover:border-white/20 hover:bg-zinc-900/60
+        ${className}
+      `}
     >
-      <div
-        ref={cardRef}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-        style={{
-          position: 'relative',
-          borderRadius: '14px',
-          overflow: 'hidden',
-          aspectRatio: '2/3',
-
-          background: 'rgba(255,255,255,0.05)',
-          backdropFilter: 'blur(12px)',
-          border: '1px solid rgba(144,224,239,0.15)',
-
-          transition: 'transform 0.15s ease',
-          transformStyle: 'preserve-3d',
-
-          boxShadow: '0 10px 35px rgba(0,0,0,0.4)'
-        }}
-      >
-        <Link to={`/anime/${anime.mal_id}`}>
-          <img
-            src={anime.images?.jpg?.large_image_url || anime.images?.jpg?.image_url}
-            alt={anime.title}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              display: 'block'
-            }}
-          />
-
-          {/* Glow overlay */}
-          <div
-            ref={glowRef}
-            style={{
-              position: 'absolute',
-              inset: 0,
-              transition: 'background 0.15s',
-              pointerEvents: 'none'
-            }}
-          />
-
-          {/* Gradient bottom */}
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent 60%)'
-          }} />
-
-          {/* Score badge */}
-          {anime.score && (
-            <div style={{
-              position: 'absolute',
-              top: 10,
-              left: 10,
-              background: '#00A8E8',
-              color: '#fff',
-              fontSize: '0.7rem',
-              fontWeight: 800,
-              padding: '3px 8px',
-              borderRadius: '4px'
-            }}>
-              ★ {anime.score}
-            </div>
-          )}
-
-          {/* Info */}
-          <div style={{
-            position: 'absolute',
-            bottom: 12,
-            left: 12,
-            right: 12
-          }}>
-            <p style={{
-              fontSize: '0.82rem',
-              fontWeight: 600,
-              color: '#EAF6FF',
-              marginBottom: 4
-            }}>
-              {anime.title_english || anime.title}
-            </p>
-
-            <p style={{
-              fontSize: '0.7rem',
-              color: '#8AA6B8'
-            }}>
-              {anime.type || 'TV'} · {anime.episodes ? `${anime.episodes} eps` : 'Ongoing'}
-            </p>
-          </div>
-        </Link>
-
-        {/* Watchlist button */}
-        <button
-          onClick={() => inList ? remove(anime.mal_id) : add(anime)}
-          style={{
-            position: 'absolute',
-            top: 10,
-            right: 10,
-            width: 30,
-            height: 30,
-            background: 'rgba(255,255,255,0.08)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(144,224,239,0.2)',
-            color: '#EAF6FF',
-            borderRadius: '50%',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          {inList ? '♥' : '+'}
-        </button>
+      {/* Mihir-Style Premium Soft Inner Glow Effect */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/5 to-transparent mix-blend-overlay" />
+      
+      {/* Render internal anime card details/children cleanly */}
+      <div className="relative z-10">
+        {children}
       </div>
-    </motion.div>
-  )
-}
+    </div>
+  );
+};
+
+export default TiltCard;
