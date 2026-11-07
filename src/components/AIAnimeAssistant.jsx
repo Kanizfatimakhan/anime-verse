@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bot, X, Send, Sparkles, Loader2, RefreshCw } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
 const QUICK_CHIPS = [
-  { label: '🔥 Top Trending', prompt: 'What are the top 3 anime trending right now and why should I watch them?' },
+  { label: '🔥 Popular Picks', prompt: 'Recommend three widely loved anime and explain what makes each one worth watching.' },
   { label: '🧠 Thriller like Death Note', prompt: 'Recommend 3 psychological thrillers with high-stakes mind games like Death Note.' },
   { label: '🌸 Warm Romance', prompt: 'Give me 3 beautiful, emotional romance anime with great animation.' },
   { label: '⚔️ Peak Shonen', prompt: 'Recommend shonen anime with movie-quality fight animation.' },
@@ -12,7 +11,7 @@ const QUICK_CHIPS = [
 ];
 
 const LOCAL_KNOWLEDGE = {
-  trending: "Here are 3 mega-hits dominating the anime world right now:\n\n1. **Solo Leveling** — Pure adrenaline power-fantasy with jaw-dropping A-1 Pictures animation.\n2. **Jujutsu Kaisen Season 2** — The Shibuya Incident arc is modern shonen peak.\n3. **Frieren: Beyond Journey's End** — A melancholic, deeply philosophical masterpiece about time and humanity.",
+  trending: "Here are three widely loved anime to explore (this offline list isn't a live popularity ranking):\n\n1. **Solo Leveling** — A fast-paced power fantasy with striking animation.\n2. **Jujutsu Kaisen** — Supernatural action with memorable characters and inventive fights.\n3. **Frieren: Beyond Journey's End** — A thoughtful fantasy about time, memory, and human connection.",
   thriller: "If you love mind games and psychological tension:\n\n1. **Monster** — The definitive cat-and-mouse psychological masterpiece by Naoki Urasawa.\n2. **Steins;Gate** — High-stakes time travel thriller with impeccable writing.\n3. **Psycho-Pass** — Dystopian cyberpunk investigating morality and criminal minds.",
   romance: "Heartfelt romances that will leave a lasting impression:\n\n1. **Your Lie in April** — A breathtaking journey of music, trauma, and love.\n2. **Kaguya-sama: Love Is War** — Genius psychological comedy meets genuine romance.\n3. **The Dangers in My Heart** — One of the best modern wholesome romance developments in recent years.",
   shonen: "Peak action with jaw-dropping choreography:\n\n1. **Demon Slayer** — ufotable's industry-defining animation and emotional battles.\n2. **Chainsaw Man** — Gritty, cinematic, unhinged action by MAPPA.\n3. **Mob Psycho 100** — Bones studio's peak kinetic animation and heart.",
@@ -29,6 +28,7 @@ export default function AIAnimeAssistant() {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [assistantMode, setAssistantMode] = useState('AI + offline fallback');
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -37,8 +37,7 @@ export default function AIAnimeAssistant() {
     }
   }, [messages, loading]);
 
-  const generateAIResponse = async (userText) => {
-    await new Promise(r => setTimeout(r, 600));
+  const generateOfflineResponse = (userText) => {
     const lower = userText.toLowerCase();
 
     if (lower.includes('trend') || lower.includes('popular') || lower.includes('best')) {
@@ -60,6 +59,40 @@ export default function AIAnimeAssistant() {
     return `Here are two incredible anime suited for your inquiry:\n\n1. **Attack on Titan** — A generational epic filled with intense political intrigue, colossal plot twists, and unforgettable music by Hiroyuki Sawano.\n\n2. **Vinland Saga** — A profound historical epic tracing a young Viking's quest for vengeance and the meaning of true strength.`;
   };
 
+  const generateAIResponse = async (userText) => {
+    const history = messages
+      .slice(1)
+      .slice(-10)
+      .map((message) => ({
+        role: message.role === 'ai' ? 'assistant' : 'user',
+        text: message.text,
+      }));
+
+    try {
+      const response = await fetch('/api/assistant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userText, history }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Assistant request failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (typeof data.reply !== 'string' || !data.reply.trim()) {
+        throw new Error('Assistant returned an empty response.');
+      }
+
+      return { text: data.reply.trim(), mode: 'Gemini AI connected' };
+    } catch {
+      return {
+        text: `AI is unavailable right now, so here's a curated offline suggestion:\n\n${generateOfflineResponse(userText)}`,
+        mode: 'Offline recommendations',
+      };
+    }
+  };
+
   const handleSend = async (customPrompt) => {
     const textToSend = (customPrompt || input).trim();
     if (!textToSend || loading) return;
@@ -70,7 +103,8 @@ export default function AIAnimeAssistant() {
 
     try {
       const aiReply = await generateAIResponse(textToSend);
-      setMessages(prev => [...prev, { role: 'ai', text: aiReply }]);
+      setAssistantMode(aiReply.mode);
+      setMessages(prev => [...prev, { role: 'ai', text: aiReply.text, mode: aiReply.mode }]);
     } catch {
       setMessages(prev => [
         ...prev,
@@ -100,12 +134,15 @@ export default function AIAnimeAssistant() {
                 </div>
                 <div>
                   <h3 className="font-black text-text uppercase tracking-widest text-xs">AnimeVerse Guide</h3>
-                  <p className="text-[10px] text-accent font-semibold uppercase tracking-wider">Instant recommendations</p>
+                  <p className="text-[10px] text-accent font-semibold uppercase tracking-wider">{assistantMode}</p>
                 </div>
               </div>
               <div className="flex items-center gap-1">
                 <button
-                  onClick={() => setMessages([{ role: 'ai', text: 'Chat reset. How can I help you discover your next favorite anime?' }])}
+                  onClick={() => {
+                    setMessages([{ role: 'ai', text: 'Chat reset. How can I help you discover your next favorite anime?' }]);
+                    setAssistantMode('AI + offline fallback');
+                  }}
                   className="p-1.5 text-muted hover:text-text hover:bg-white/5 rounded-lg transition-colors"
                   title="Clear chat"
                 >
@@ -145,6 +182,11 @@ export default function AIAnimeAssistant() {
                         : 'bg-zinc-900/90 border border-white/10 text-zinc-200 rounded-tl-sm whitespace-pre-wrap'
                     }`}
                   >
+                    {msg.mode && (
+                      <span className="block mb-1 text-[9px] font-bold uppercase tracking-wider text-accent/80">
+                        {msg.mode}
+                      </span>
+                    )}
                     {msg.text}
                   </div>
                 </div>
@@ -165,6 +207,7 @@ export default function AIAnimeAssistant() {
                 <input
                   type="text"
                   value={input}
+                  maxLength={1200}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                   placeholder="Ask for an anime recommendation..."
