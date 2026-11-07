@@ -1,18 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, X, Send, Sparkles, Loader2, RefreshCw, MessageSquare, Compass } from 'lucide-react';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { Bot, X, Send, Sparkles, Loader2, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-let genAI = null;
-try {
-  if (API_KEY && API_KEY !== 'your_api_key_here') {
-    genAI = new GoogleGenerativeAI(API_KEY);
-  }
-} catch (e) {
-  console.warn('Gemini AI init:', e);
-}
 
 const QUICK_CHIPS = [
   { label: '🔥 Top Trending', prompt: 'What are the top 3 anime trending right now and why should I watch them?' },
@@ -35,7 +24,7 @@ export default function AIAnimeAssistant() {
   const [messages, setMessages] = useState([
     {
       role: 'ai',
-      text: "Konnichiwa! ⛩️ I'm your Gemini AI Anime Guide. Ask me for recommendations, plot explanations, or pick a mood below!",
+      text: "Konnichiwa! ⛩️ I'm your AnimeVerse Guide. Ask me for recommendations, plot explanations, or pick a mood below!",
     },
   ]);
   const [input, setInput] = useState('');
@@ -49,26 +38,6 @@ export default function AIAnimeAssistant() {
   }, [messages, loading]);
 
   const generateAIResponse = async (userText) => {
-    // If Gemini key is available and configured
-    if (genAI) {
-      try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-        const prompt = `You are a world-class, charismatic anime concierge named 'AnimeVerse AI'.
-The user is asking: "${userText}".
-Rules:
-- Provide 2 to 3 concise, spoiler-free anime recommendations or answers.
-- Format with clear bullet points (**Title**, brief pitch, vibe).
-- Keep response under 150 words.
-- Enthusiastic and knowledgeable tone.`;
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        return response.text();
-      } catch (err) {
-        console.warn('Gemini request failed, falling back to local engine:', err.message);
-      }
-    }
-
-    // Smart Local Fallback based on keywords
     await new Promise(r => setTimeout(r, 600));
     const lower = userText.toLowerCase();
 
@@ -88,7 +57,7 @@ Rules:
       return LOCAL_KNOWLEDGE.quick;
     }
 
-    return `Here are two incredible anime suited for your inquiry:\n\n1. **Attack on Titan** — A generational epic filled with intense political intrigue, colossal plot twists, and unforgettable music by Hiroyuki Sawano.\n\n2. **Vinland Saga** — A profound historical epic tracing a young Viking's quest for vengeance and the meaning of true strength.\n\n*(Tip: Add your Gemini API key in .env for full custom interactive conversations!)*`;
+    return `Here are two incredible anime suited for your inquiry:\n\n1. **Attack on Titan** — A generational epic filled with intense political intrigue, colossal plot twists, and unforgettable music by Hiroyuki Sawano.\n\n2. **Vinland Saga** — A profound historical epic tracing a young Viking's quest for vengeance and the meaning of true strength.`;
   };
 
   const handleSend = async (customPrompt) => {
@@ -121,7 +90,7 @@ Rules:
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="absolute bottom-16 right-0 h-[min(540px,calc(100dvh-7rem))] max-h-[calc(100dvh-7rem)] w-[calc(100vw-2rem)] sm:w-[420px] bg-zinc-950/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden"
+            className="fixed bottom-24 right-4 z-[110] h-[min(480px,calc(100dvh-12rem))] max-h-[calc(100dvh-12rem)] w-[calc(100vw-2rem)] sm:right-6 sm:w-[420px] bg-zinc-950/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden"
           >
             {/* Header */}
             <div className="p-3.5 border-b border-white/10 bg-white/5 flex items-center justify-between">
@@ -130,10 +99,8 @@ Rules:
                   <Sparkles className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-black text-text uppercase tracking-widest text-xs">Gemini AI Assistant</h3>
-                  <p className="text-[10px] text-accent font-semibold uppercase tracking-wider">
-                    {genAI ? 'Gemini 1.5 Flash' : 'Smart Offline Mode'}
-                  </p>
+                  <h3 className="font-black text-text uppercase tracking-widest text-xs">AnimeVerse Guide</h3>
+                  <p className="text-[10px] text-accent font-semibold uppercase tracking-wider">Instant recommendations</p>
                 </div>
               </div>
               <div className="flex items-center gap-1">

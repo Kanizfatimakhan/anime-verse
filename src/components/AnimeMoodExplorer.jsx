@@ -20,9 +20,9 @@ export default function AnimeMoodExplorer() {
   };
 
   return (
-    <section id="mood-explorer" className="relative overflow-hidden py-12 sm:py-16">
+    <section id="mood-explorer" className="relative overflow-hidden py-8 sm:py-12">
       <div className="page-container relative z-10">
-        <div className="mb-8 flex flex-col gap-4 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
           <div>
           <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-violet-300/75">Choose your route</p>
           <h2 className="section-heading text-2xl text-text sm:text-3xl">
@@ -32,7 +32,7 @@ export default function AnimeMoodExplorer() {
           <p className="max-w-md text-sm leading-6 text-muted">Pick a feeling. We’ll take you to stories that match the vibe.</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4">
           {moods.map((mood, i) => {
             const Icon = mood.icon;
             return (
@@ -45,10 +45,10 @@ export default function AnimeMoodExplorer() {
                 whileHover={{ y: -3 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => handleMoodSelect(mood)}
-                className="group relative flex min-h-28 items-center gap-3 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.025] p-4 text-left transition-all duration-300 hover:border-violet-200/30 hover:bg-violet-300/[0.06] sm:min-h-32 sm:gap-4 sm:p-5"
+                className="group relative flex min-h-24 items-center gap-2.5 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.025] p-3 text-left transition-all duration-300 hover:border-violet-200/30 hover:bg-violet-300/[0.06] sm:min-h-28 sm:gap-4 sm:p-5"
               >
-                <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] sm:h-12 sm:w-12 ${mood.color}`}>
-                  <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
+                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] sm:h-12 sm:w-12 ${mood.color}`}>
+                  <Icon className="h-4 w-4 sm:h-6 sm:w-6" />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-semibold text-white sm:text-base">{mood.name}</span>

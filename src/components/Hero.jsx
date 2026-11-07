@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, CalendarDays, Search, Shuffle, Sparkles, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getAnimeRouteId } from '../utils/animeApi';
 
 const HERO_ART = '/steel-ball-run-2560x1440-25586.jpg';
 
@@ -48,32 +49,21 @@ export default function Hero({ featuredAnime = [] }) {
     >
       <div
         aria-hidden="true"
-        className="absolute inset-0 -z-30 bg-cover bg-[center_38%] opacity-45 sm:opacity-55"
+        className="absolute inset-0 -z-30 bg-cover bg-[center_38%] opacity-25 sm:opacity-30"
         style={{ backgroundImage: `url("${HERO_ART}")` }}
       />
-      <div className="absolute inset-0 -z-20 bg-gradient-to-r from-[#08070e] via-[#08070e]/90 to-[#08070e]/35" />
-      <div className="absolute inset-0 -z-20 bg-gradient-to-t from-[#08070e] via-transparent to-[#08070e]/35" />
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_68%_48%,rgba(124,58,237,0.22),transparent_44%)]" />
+      <div className="absolute inset-0 -z-20 bg-gradient-to-r from-[#08070e] via-[#08070e]/95 to-[#08070e]/55" />
+      <div className="absolute inset-0 -z-20 bg-gradient-to-t from-[#08070e] via-[#08070e]/20 to-[#08070e]/55" />
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_68%_48%,rgba(124,58,237,0.12),transparent_44%)]" />
 
-      <motion.div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-36 top-24 -z-10 h-[28rem] w-[28rem] rounded-full border border-violet-200/10 sm:right-[6%] sm:top-28 sm:h-[36rem] sm:w-[36rem]"
-        animate={{ rotate: 360 }}
-        transition={{ duration: 90, repeat: Infinity, ease: 'linear' }}
-      >
-        <span className="absolute left-[17%] top-[15%] h-2 w-2 rounded-full bg-cyan-200 shadow-[0_0_20px_rgba(103,232,249,0.9)]" />
-        <span className="absolute bottom-[18%] right-[9%] h-1.5 w-1.5 rounded-full bg-fuchsia-200 shadow-[0_0_18px_rgba(232,121,249,0.9)]" />
-      </motion.div>
-      <div aria-hidden="true" className="pointer-events-none absolute -right-24 top-40 -z-10 h-[24rem] w-[24rem] rounded-full border border-violet-200/[0.07] sm:right-[10%] sm:top-44 sm:h-[30rem] sm:w-[30rem]" />
-
-      <div className="mx-auto grid min-h-[inherit] max-w-7xl items-center gap-10 px-5 pb-16 pt-24 sm:px-8 sm:pb-20 sm:pt-28 lg:grid-cols-[1fr_0.8fr] lg:gap-16 lg:px-10">
+      <div className="mx-auto grid min-h-[inherit] max-w-7xl items-center gap-6 px-5 pb-10 pt-20 sm:gap-10 sm:px-8 sm:pb-16 sm:pt-24 lg:grid-cols-[1fr_0.8fr] lg:gap-16 lg:px-10 lg:py-24">
         <motion.div
           initial={{ opacity: 0, y: 22 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           className="relative z-10"
         >
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-violet-200/20 bg-black/35 px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-violet-100/85 backdrop-blur-md sm:text-xs">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-violet-200/20 bg-black/35 px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-violet-100/85 backdrop-blur-md sm:mb-6 sm:text-xs">
             <Sparkles className="h-3.5 w-3.5 text-cyan-200" />
             AnimeVerse · Your anime discovery
           </div>
@@ -86,11 +76,11 @@ export default function Hero({ featuredAnime = [] }) {
             </span>
           </h1>
 
-          <p className="mt-6 max-w-xl text-sm leading-7 text-white/70 sm:text-base sm:leading-8">
+          <p className="mt-4 max-w-xl text-sm leading-6 text-white/70 sm:mt-6 sm:text-base sm:leading-8">
             Find a story that fits your mood, explore what everyone is watching, and keep track of what you love.
           </p>
 
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row">
             <Link
               to="/search"
               className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-violet-300 px-6 text-sm font-bold text-zinc-950 shadow-[0_8px_32px_rgba(139,92,246,0.3)] transition hover:-translate-y-0.5 hover:bg-violet-200 hover:shadow-[0_10px_36px_rgba(139,92,246,0.45)]"
@@ -107,7 +97,7 @@ export default function Hero({ featuredAnime = [] }) {
             </a>
           </div>
 
-          <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3 text-xs text-white/50">
+          <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3 text-xs text-white/50 sm:mt-8">
             <Link to="/schedule" className="inline-flex items-center gap-2 transition hover:text-cyan-100">
               <CalendarDays className="h-4 w-4 text-cyan-200" /> See what airs next
             </Link>
@@ -132,7 +122,7 @@ export default function Hero({ featuredAnime = [] }) {
             </div>
 
             <Link
-              to={activeAnime ? `/anime/${activeAnime.mal_id}` : '/search'}
+              to={activeAnime ? `/anime/${getAnimeRouteId(activeAnime)}` : '/search'}
               aria-label={`View ${title}`}
               className="group relative block aspect-[4/5] overflow-hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-violet-200"
             >

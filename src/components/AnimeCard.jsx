@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Star, Plus, Check, ArrowUpRight } from 'lucide-react';
 import { useWatchlist } from '../hooks/useWatchlist';
 import { useToast } from '../context/ToastContext';
+import { getAnimeRouteId } from '../utils/animeApi';
 
 const FALLBACK_IMAGE = '/steel-ball-run-2560x1440-25586.jpg';
 
@@ -27,7 +28,7 @@ export default function AnimeCard({ anime, index = 0 }) {
     FALLBACK_IMAGE;
   const title = anime.title_english || anime.title || 'Untitled anime';
 
-  const openDetails = () => navigate(`/anime/${anime.mal_id}`);
+  const openDetails = () => navigate(`/anime/${getAnimeRouteId(anime)}`);
   const handleKeyDown = event => {
     if (event.target !== event.currentTarget) return;
     if (event.key === 'Enter' || event.key === ' ') {

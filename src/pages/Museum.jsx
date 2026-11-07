@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Bookmark, Compass, Sparkles } from 'lucide-react';
 import { useWatchlist } from '../hooks/useWatchlist';
 import { SEED_ANIME_LIST } from '../data/animeSeedData';
+import { getAnimeRouteId } from '../utils/animeApi';
 
 const FEATURED_IDS = [52991, 5114, 40748, 16498, 38000, 9253, 1535, 32281];
 const FEATURED_ANIME = FEATURED_IDS
@@ -34,7 +35,7 @@ function Exhibit({ anime, position, rotation, onSelect }) {
           type="button"
           onClick={event => {
             event.stopPropagation();
-            onSelect(anime.mal_id);
+            onSelect(getAnimeRouteId(anime));
           }}
           className="group relative block h-[clamp(150px,40vw,300px)] w-[clamp(100px,27vw,200px)] overflow-hidden rounded-lg border-2 border-violet-300/50 bg-zinc-900 text-left shadow-[0_0_24px_rgba(124,58,237,0.3)] transition hover:border-cyan-300"
           title={`View ${title}`}
@@ -151,7 +152,7 @@ export default function Museum() {
         <p className="mt-1 text-xs text-white/65">Drag to explore · Select any poster for details</p>
       </header>
 
-      <div className="absolute right-4 top-5 z-20 sm:right-6">
+      <div className="absolute right-4 top-28 z-20 sm:right-6 sm:top-5">
         {watchlist.length > 0 && (
           <button
             type="button"

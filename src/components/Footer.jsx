@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 
 export default function Footer() {
   return (
-    <footer className="border-t border-white/5 bg-background pt-10 pb-12 mt-10 relative z-10">
+    <footer className="relative z-10 mt-0 border-t border-white/5 bg-background pb-12 pt-10">
       <div className="page-container grid grid-cols-1 gap-10 md:grid-cols-3">
         
         {/* Brand */}
@@ -24,7 +24,16 @@ export default function Footer() {
         <div>
           <h3 className="font-bold tracking-wider text-text mb-4 uppercase text-xs">Navigate</h3>
           <ul className="flex flex-col gap-2.5">
-            {[['/', 'Home'], ['/genres', 'Genres'], ['/watchlist', 'Watchlist'], ['/search', 'Search']].map(([path, label]) => (
+            {[
+              ['/', 'Home'],
+              ['/search', 'Search'],
+              ['/genres', 'Genres'],
+              ['/gallery', 'Gallery'],
+              ['/schedule', 'Schedule'],
+              ['/compare', 'Versus'],
+              ['/watchlist', 'Watchlist'],
+              ['/developer', 'Developer'],
+            ].map(([path, label]) => (
               <li key={path}>
                 <Link to={path} className="text-muted hover:text-primary transition-colors text-sm">
                   {label}
@@ -41,7 +50,7 @@ export default function Footer() {
             AnimeVerse is a modern anime discovery platform built for fans. Explore trending series, genres, and detailed anime information in one place.
           </p>
           <p className="text-xs text-muted/50">
-            Powered by Jikan API · Updated regularly for anime lovers
+            Powered by AniList · Updated regularly for anime lovers
           </p>
         </div>
       </div>

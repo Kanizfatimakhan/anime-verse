@@ -1,6 +1,46 @@
-import { useState, useEffect } from 'react';
+import { createContext, createElement, useContext, useEffect, useState } from 'react';
 
-export const useWatchlist = () => {
+const WatchlistContext = createContext(null);
+const VALID_STATUSES = new Set(['watching', 'plan_to_watch', 'completed']);
+
+function normalizeEntry(item) {
+  if (!item || typeof item !== 'object' || Array.isArray(item)) return null;
+  const id = Number(item.mal_id);
+  if (!Number.isSafeInteger(id) || id <= 0 || !(item.title || item.title_english)) return null;
+
+  const episodes = Number(item.episodes) > 0 ? Math.floor(Number(item.episodes)) : null;
+  const requestedProgress = Number(item.episodesWatched);
+  const episodesWatched = Math.max(0, Math.min(
+    Number.isFinite(requestedProgress) ? Math.floor(requestedProgress) : 0,
+    episodes || Number.MAX_SAFE_INTEGER
+  ));
+  const status = episodes && episodesWatched >= episodes
+    ? 'completed'
+    : VALID_STATUSES.has(item.status) ? item.status : 'plan_to_watch';
+
+  return {
+    ...item,
+    mal_id: id,
+    status,
+    episodesWatched,
+    addedAt: item.addedAt || new Date().toISOString(),
+    genres: Array.isArray(item.genres)
+      ? item.genres.filter(genre => genre && typeof genre.name === 'string')
+      : [],
+  };
+}
+
+function normalizeList(list) {
+  if (!Array.isArray(list)) return [];
+  const unique = new Map();
+  list.forEach(item => {
+    const normalized = normalizeEntry(item);
+    if (normalized && !unique.has(normalized.mal_id)) unique.set(normalized.mal_id, normalized);
+  });
+  return [...unique.values()];
+}
+
+function useWatchlistStore() {
   const [watchlist, setWatchlist] = useState(() => {
     if (typeof window === 'undefined') {
       return [];
@@ -9,14 +49,9 @@ export const useWatchlist = () => {
     try {
       const stored = window.localStorage.getItem('watchlist');
       if (!stored) return [];
-      const parsed = JSON.parse(stored);
-      return Array.isArray(parsed) ? parsed.map(item => ({
-        ...item,
-        status: item.status || 'plan_to_watch',
-        episodesWatched: item.episodesWatched || 0,
-        addedAt: item.addedAt || new Date().toISOString(),
-      })) : [];
-    } catch {
+      return normalizeList(JSON.parse(stored));
+    } catch (error) {
+      console.warn('Unable to read watchlist from localStorage:', error);
       return [];
     }
   });
@@ -32,6 +67,19 @@ export const useWatchlist = () => {
       console.warn('Failed to save watchlist to localStorage', e);
     }
   }, [watchlist]);
+
+  useEffect(() => {
+    const handleStorage = event => {
+      if (event.key !== 'watchlist') return;
+      try {
+        setWatchlist(normalizeList(event.newValue ? JSON.parse(event.newValue) : []));
+      } catch (error) {
+        console.warn('Unable to sync watchlist from another tab:', error);
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
 
   const add = (anime, status = 'plan_to_watch', episodesWatched = 0) => {
     setWatchlist(prev => {
@@ -102,11 +150,10 @@ export const useWatchlist = () => {
   const clearAll = () => setWatchlist([]);
 
   const importList = (jsonList) => {
-    if (Array.isArray(jsonList)) {
-      setWatchlist(jsonList);
-      return true;
-    }
-    return false;
+    if (!Array.isArray(jsonList)) return { imported: 0, skipped: 0 };
+    const normalized = normalizeList(jsonList);
+    setWatchlist(normalized);
+    return { imported: normalized.length, skipped: jsonList.length - normalized.length };
   };
 
   return {
@@ -123,4 +170,15 @@ export const useWatchlist = () => {
     clearAll,
     importList,
   };
+}
+
+export function WatchlistProvider({ children }) {
+  const value = useWatchlistStore();
+  return createElement(WatchlistContext.Provider, { value }, children);
+}
+
+export const useWatchlist = () => {
+  const context = useContext(WatchlistContext);
+  if (!context) throw new Error('useWatchlist must be used within a WatchlistProvider');
+  return context;
 };

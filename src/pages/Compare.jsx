@@ -35,10 +35,10 @@ export default function Compare() {
           <select
             value={animeAId}
             onChange={(e) => setAnimeAId(Number(e.target.value))}
-            className="w-full glass bg-zinc-900 border border-white/10 rounded-xl px-4 py-2.5 text-xs font-bold text-white outline-none focus:border-primary"
+            className="w-full glass [color-scheme:dark] bg-zinc-900 border border-white/10 rounded-xl px-4 py-2.5 text-xs font-bold text-white outline-none focus:border-primary"
           >
             {SEED_ANIME_LIST.map(a => (
-              <option key={a.mal_id} value={a.mal_id}>
+              <option className="bg-zinc-900 text-white" key={a.mal_id} value={a.mal_id}>
                 {a.title_english || a.title} (★ {a.score})
               </option>
             ))}
@@ -52,10 +52,10 @@ export default function Compare() {
           <select
             value={animeBId}
             onChange={(e) => setAnimeBId(Number(e.target.value))}
-            className="w-full glass bg-zinc-900 border border-white/10 rounded-xl px-4 py-2.5 text-xs font-bold text-white outline-none focus:border-accent"
+            className="w-full glass [color-scheme:dark] bg-zinc-900 border border-white/10 rounded-xl px-4 py-2.5 text-xs font-bold text-white outline-none focus:border-accent"
           >
             {SEED_ANIME_LIST.map(a => (
-              <option key={a.mal_id} value={a.mal_id}>
+              <option className="bg-zinc-900 text-white" key={a.mal_id} value={a.mal_id}>
                 {a.title_english || a.title} (★ {a.score})
               </option>
             ))}

@@ -11,6 +11,7 @@ import ScrollProgress from './components/ScrollProgress';
 import CommandPalette from './components/CommandPalette';
 import AIAnimeAssistant from './components/AIAnimeAssistant';
 import { ToastProvider } from './context/ToastContext';
+import { WatchlistProvider } from './hooks/useWatchlist';
 
 // Pages Modules Injection
 import Home from './pages/Home';
@@ -55,6 +56,7 @@ function App() {
   const location = useLocation();
 
   return (
+    <WatchlistProvider>
     <ToastProvider>
         {/* Dynamic Framework Setup with Forced Core Variable Bindings */}
       <ReactLenis root options={{ lerp: 0.08, duration: 1.2, smoothTouch: false }}>
@@ -85,7 +87,7 @@ function App() {
             </main>
 
             {/* AI Assistant - Bottom Right */}
-            <div className="fixed bottom-4 right-4 z-50 pointer-events-auto sm:bottom-6 sm:right-6">
+            <div className="fixed bottom-4 right-4 z-[110] pointer-events-auto sm:bottom-6 sm:right-6">
               <AIAnimeAssistant />
             </div>
 
@@ -93,6 +95,7 @@ function App() {
         </div>
       </ReactLenis>
     </ToastProvider>
+    </WatchlistProvider>
   );
 }
 

@@ -24,6 +24,16 @@
     outline-offset: 3px;
   }
 
+  select,
+  select option {
+    color-scheme: dark;
+  }
+
+  select option {
+    background-color: #18181b;
+    color: #fff;
+  }
+
   body {
     background: var(--bg);
     color: var(--text);

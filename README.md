@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <strong>An Awwwards-inspired, cinematic anime discovery platform built with WebGL 3D, physics-driven micro-interactions, and Google Gemini AI.</strong>
+  <strong>An Awwwards-inspired, cinematic anime discovery platform built with WebGL 3D and physics-driven micro-interactions.</strong>
 </p>
 
 <p align="center">
@@ -19,7 +19,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/React-18.2-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React" />
   <img src="https://img.shields.io/badge/Three.js-WebGL-000000?style=for-the-badge&logo=three.js&logoColor=white" alt="Three.js" />
-  <img src="https://img.shields.io/badge/Google_Gemini-1.5_Flash-8E75C2?style=for-the-badge&logo=google&logoColor=white" alt="Gemini AI" />
+  <img src="https://img.shields.io/badge/Anime_Guide-Offline-8E75C2?style=for-the-badge&logo=google&logoColor=white" alt="Offline anime guide" />
   <img src="https://img.shields.io/badge/GSAP-3.15-88CE02?style=for-the-badge&logo=greensock&logoColor=white" alt="GSAP" />
   <img src="https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind" />
   <img src="https://img.shields.io/badge/Vite-5.0-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" />
@@ -37,7 +37,7 @@
 4. **Weekly Airing Broadcast Schedule**: Monday-to-Sunday interactive simulcast schedule with live *"Airing Today"* indicators.
 5. **Anime Versus Arena (`/compare`)**: Side-by-side head-to-head battle comparing ratings, episode pacing, and studio matchups.
 6. **Anime Gallery & Virtual Museum**: Browse curated anime posters in the gallery or explore them in an interactive 3D museum.
-7. **Conversational AI Assistant**: Integrated with **Google Gemini 1.5 Flash** with resilient offline heuristic recommendations.
+7. **Anime Guide**: Instant, offline recommendations based on common anime moods and themes.
 
 ---
 
@@ -47,14 +47,16 @@
 * **Anime Gallery** (`/gallery`): Browse a responsive gallery of anime posters, ratings, and titles; switch between featured anime and your watchlist.
 * **Virtual Museum** (`/museum`): Explore poster exhibits in an interactive 3D room and open any anime's details.
 
-### 🤖 2. Gemini-Powered AI Concierge
-* Live natural-language recommendations powered by **Google Gemini 1.5 Flash**.
+### 🤖 2. Anime Guide
+* Instant, offline recommendations for popular anime moods and themes.
 * Instant quick-prompt chips (*"🔥 Top Trending"*, *"🧠 Psychological Thrillers"*, *"🌸 Warm Romance"*, *"⚔️ Peak Shonen"*, *"⚡ Quick Binge"*).
-* Smart zero-config offline fallback with curated recommendations.
+* No API key or account required.
 
 ### 🔍 3. Advanced Filtering & Real-time Search
 * Multi-parameter matrix: Filter simultaneously by **Type** (*TV, Movie, OVA*), **Status** (*Airing, Complete, Upcoming*), **Genre**, and **Sorting Criteria**.
+* Browse by anime origin across the AniList catalog, with quick links for Japan, China, South Korea, and Taiwan.
 * Debounced inputs with persistent recent searches and instant clearing.
+* Region-aware JustWatch search links help check streaming catalogs; availability is not asserted by AnimeVerse.
 
 ### 📊 4. Watchlist Manager with Analytics
 * Real-time metrics: Total Shows, Completed counter, Currently Watching tally, and Average Collection Rating.
@@ -73,9 +75,9 @@
 | **Frontend Core** | React 18, React Router v6, Vite 5 |
 | **3D & WebGL** | Three.js, React Three Fiber (`@react-three/fiber`), `@react-three/drei` |
 | **Animation & Physics** | GSAP 3 (ScrollTrigger), Framer Motion 11, React Lenis, React Parallax Tilt |
-| **Artificial Intelligence**| Google Generative AI SDK (`gemini-1.5-flash`) |
+| **Recommendations**| Curated offline anime guide |
 | **Styling & Theming** | Tailwind CSS 3, PostCSS, Glassmorphism, CSS Custom Properties |
-| **API & Networking** | Axios, Jikan v4 RESTful API, Custom Request Interceptors |
+| **API & Networking** | Axios, AniList GraphQL API, throttled requests, and cached local fallbacks |
 
 ---
 
@@ -86,7 +88,7 @@ anime-verse/
 ├── public/                     # Static media, icons & manifests
 ├── src/
 │   ├── components/             # Reusable modular UI components
-│   │   ├── AIAnimeAssistant.jsx    # Gemini AI concierge floating widget
+│   │   ├── AIAnimeAssistant.jsx    # Offline anime recommendation widget
 │   │   ├── AnimeCard.jsx           # 3D interactive tilt poster card
 │   │   ├── AnimeMoodExplorer.jsx   # Mood-based genre discovery
 │   │   ├── AnimeSlider.jsx         # Swiper.js touch carousel
@@ -109,7 +111,7 @@ anime-verse/
 │   │   ├── Search.jsx              # Multi-faceted search matrix
 │   │   └── Watchlist.jsx           # Personal library with bento stats
 │   ├── utils/
-│   │   └── animeApi.js             # Throttled & cached Jikan v4 client
+│   │   └── animeApi.js             # Throttled & cached AniList GraphQL client
 │   ├── App.jsx                     # Layout shell, Lenis scroll & routing
 │   ├── index.css                   # Global design tokens & utility layers
 │   └── main.jsx                    # Application entry
@@ -142,16 +144,12 @@ anime-verse/
    pnpm install
    ```
 
-3. **Configure Environment Variables (Optional for AI Chatbot):**
+3. **Environment Variables:**
    Copy `.env.example` to `.env`:
    ```bash
    cp .env.example .env
    ```
-   Add your Google Gemini API key:
-   ```env
-   VITE_GEMINI_API_KEY=your_gemini_api_key_here
-   ```
-   *(Note: The app runs 100% smoothly even without an API key thanks to the built-in offline heuristic assistant).*
+   No environment variables are required. The anime guide works offline. Never place private API keys in `VITE_*` variables because they are included in browser code.
 
 4. **Launch Development Server:**
    ```bash
@@ -173,8 +171,8 @@ anime-verse/
 1. Push your repository to GitHub.
 2. Import the project into [Vercel](https://vercel.com).
 3. Root Directory: `./` (standard root).
-4. Add `VITE_GEMINI_API_KEY` under Environment Variables.
-5. Click **Deploy**!
+4. No environment variables are required for the current app.
+5. Click **Deploy**! The included Vercel rewrite serves the React app for direct links to client-side routes.
 
 ---
 
@@ -185,7 +183,7 @@ anime-verse/
 * **LinkedIn**: [kaniz-fatima-khan-452841246](https://www.linkedin.com/in/kaniz-fatima-khan-452841246/)
 * **GitHub**: [@Kanizfatimakhan](https://github.com/Kanizfatimakhan)
 
-*Built as a showcase of advanced full-stack frontend engineering, WebGL 3D design systems, and generative AI interfaces.*
+*Built as a showcase of frontend engineering, WebGL 3D design systems, and interactive anime discovery.*
 
 ---
 

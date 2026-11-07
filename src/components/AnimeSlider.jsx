@@ -22,8 +22,8 @@ export default function AnimeSlider({ title, items }) {
   };
 
   return (
-    <section className="group relative py-7 sm:py-9" onKeyDown={handleKeyDown}>
-      <div className="mx-auto mb-5 flex max-w-7xl items-end justify-between gap-4 px-1 sm:mb-6 sm:px-6">
+    <section className="group relative py-5 sm:py-6" onKeyDown={handleKeyDown}>
+      <div className="mx-auto mb-4 flex max-w-7xl items-end justify-between gap-4 px-1 sm:mb-5 sm:px-6">
         <div>
           <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-violet-300/80 sm:text-[11px]">
             AnimeVerse picks

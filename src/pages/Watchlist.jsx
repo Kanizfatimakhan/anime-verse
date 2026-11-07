@@ -93,8 +93,16 @@ export default function Watchlist() {
       try {
         const parsed = JSON.parse(event.target.result);
         if (Array.isArray(parsed)) {
-          importList(parsed);
-          showToast(`Imported ${parsed.length} anime entries! ✨`, 'success');
+          const result = importList(parsed);
+          if (!result.imported) {
+            showToast('No valid anime entries found in this file.', 'error');
+          } else if (result.skipped) {
+            showToast(`Imported ${result.imported}; skipped ${result.skipped} invalid or duplicate entries.`, 'info');
+          } else {
+            showToast(`Imported ${result.imported} anime entries! ✨`, 'success');
+          }
+        } else {
+          showToast('Watchlist backup must be a JSON array.', 'error');
         }
       } catch (err) {
         showToast('Invalid JSON file format', 'error');

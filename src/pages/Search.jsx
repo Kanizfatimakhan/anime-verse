@@ -1,5 +1,5 @@
-import { useEffect, useState, useTransition } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { searchAnime } from '../utils/animeApi';
 import AnimeCard from '../components/AnimeCard';
 import { Search as SearchIcon, Clock, X, SlidersHorizontal, Sparkles, ChevronDown } from 'lucide-react';
@@ -12,6 +12,14 @@ const TYPE_OPTIONS = [
   { id: 'movie', label: 'Movies' },
   { id: 'ova', label: 'OVAs' },
   { id: 'special', label: 'Specials' },
+];
+
+const ORIGIN_OPTIONS = [
+  { id: '', label: 'All origins' },
+  { id: 'JP', label: 'Japan' },
+  { id: 'CN', label: 'China' },
+  { id: 'KR', label: 'South Korea' },
+  { id: 'TW', label: 'Taiwan' },
 ];
 
 const STATUS_OPTIONS = [
@@ -39,24 +47,108 @@ const QUICK_GENRES = [
   { id: 40, name: 'Psychological' },
 ];
 
+function FilterSelect({ label, value, options, onChange }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef(null);
+  const selected = options.find(option => option.id === value) || options[0];
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const closeOnOutsideClick = event => {
+      if (!rootRef.current?.contains(event.target)) setOpen(false);
+    };
+    const closeOnEscape = event => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('pointerdown', closeOnOutsideClick);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsideClick);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [open]);
+
+  return (
+    <div>
+      <label className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-muted">
+        {label}
+      </label>
+      <div className="relative" ref={rootRef}>
+        <button
+          type="button"
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          onClick={() => setOpen(current => !current)}
+          className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-zinc-900 px-3 py-2.5 text-left text-xs font-semibold text-text transition hover:border-white/20 focus-visible:border-primary"
+        >
+          <span>{selected.label}</span>
+          <ChevronDown className={`h-4 w-4 text-muted transition-transform ${open ? 'rotate-180' : ''}`} />
+        </button>
+        {open && (
+          <div
+            role="listbox"
+            aria-label={label}
+            className="absolute left-0 right-0 top-full z-[80] mt-1 max-h-56 overflow-y-auto rounded-xl border border-white/10 bg-zinc-900 p-1 shadow-xl shadow-black/50"
+          >
+            {options.map(option => (
+              <button
+                type="button"
+                role="option"
+                aria-selected={value === option.id}
+                key={option.id}
+                onClick={() => {
+                  onChange(option.id);
+                  setOpen(false);
+                }}
+                className={`w-full rounded-lg px-3 py-2 text-left text-xs transition ${
+                  value === option.id
+                    ? 'bg-primary/20 text-white'
+                    : 'text-white/75 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function Search() {
   const [params, setParams] = useSearchParams();
   const initialQ = params.get('q') || '';
   const initialGenre = params.get('genre') || '';
+  const initialOrigin = params.get('country') || '';
+  const initialFrom = params.get('from') || '';
+  const initialTo = params.get('to') || '';
 
   const [query, setQuery] = useState(initialQ);
   const [type, setType] = useState('');
   const [status, setStatus] = useState('');
   const [orderBy, setOrderBy] = useState('popularity');
   const [selectedGenre, setSelectedGenre] = useState(initialGenre);
-  const [showFilters, setShowFilters] = useState(false);
+  const [countryOfOrigin, setCountryOfOrigin] = useState(initialOrigin);
+  const [yearRange, setYearRange] = useState({ from: initialFrom, to: initialTo });
+  const [showFilters, setShowFilters] = useState(Boolean(initialOrigin));
 
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [recentSearches, setRecentSearches] = useLocalStorage('animeverse_recent_searches', []);
-  const navigate = useNavigate();
+  const updateSearchUrl = (nextQuery, nextOrigin = countryOfOrigin, nextGenre = selectedGenre) => {
+    const nextParams = new URLSearchParams();
+    if (nextQuery.trim()) nextParams.set('q', nextQuery.trim());
+    if (nextGenre) nextParams.set('genre', nextGenre);
+    if (nextOrigin) nextParams.set('country', nextOrigin);
+    if (yearRange.from && yearRange.to) {
+      nextParams.set('from', yearRange.from);
+      nextParams.set('to', yearRange.to);
+    }
+    setParams(nextParams, { replace: true });
+  };
 
   // Search execution
   const executeSearch = async (targetQuery, targetPage = 1, append = false) => {
@@ -66,6 +158,9 @@ export default function Search() {
         page: targetPage,
         type: type || undefined,
         status: status || undefined,
+        countryOfOrigin: countryOfOrigin || undefined,
+        startDateGreater: yearRange.from ? Number(`${Number(yearRange.from) - 1}1231`) : undefined,
+        startDateLesser: yearRange.to ? Number(`${Number(yearRange.to) + 1}0101`) : undefined,
         order_by: orderBy,
         sort: orderBy === 'title' ? 'asc' : 'desc',
         genres: selectedGenre || undefined,
@@ -102,26 +197,26 @@ export default function Search() {
     }, 450);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [query, type, status, orderBy, selectedGenre]);
+  }, [query, type, status, orderBy, selectedGenre, countryOfOrigin, yearRange]);
 
   // Sync URL changes
   useEffect(() => {
-    if (initialQ !== query && initialQ) {
-      setQuery(initialQ);
-    }
-    if (initialGenre !== selectedGenre) {
-      setSelectedGenre(initialGenre);
-    }
-  }, [initialQ, initialGenre]);
+    setQuery(initialQ);
+    setSelectedGenre(initialGenre);
+    setCountryOfOrigin(initialOrigin);
+    setYearRange({ from: initialFrom, to: initialTo });
+    if (initialOrigin) setShowFilters(true);
+  }, [initialQ, initialGenre, initialOrigin, initialFrom, initialTo]);
 
   const handleRecentClick = (term) => {
     setQuery(term);
-    navigate(`/search?q=${encodeURIComponent(term)}`);
+    updateSearchUrl(term);
   };
 
   const handleGenreToggle = (genreId) => {
     const newGenre = selectedGenre === String(genreId) ? '' : String(genreId);
     setSelectedGenre(newGenre);
+    updateSearchUrl(query, countryOfOrigin, newGenre);
   };
 
   const handleLoadMore = () => {
@@ -141,8 +236,45 @@ export default function Search() {
           Explore <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">Anime</span>
         </h1>
         <p className="text-muted text-sm max-w-md mx-auto mb-8">
-          Search across thousands of titles in English, Japanese Romaji, or browse curated filter matrices.
+          Explore anime worldwide by title, genre, release status, format, and country of origin.
         </p>
+
+        {countryOfOrigin && (
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-cyan-200/20 bg-cyan-300/10 px-4 py-2 text-sm font-semibold text-cyan-100">
+            Showing anime from {ORIGIN_OPTIONS.find(option => option.id === countryOfOrigin)?.label || countryOfOrigin}
+            <button
+              type="button"
+              onClick={() => {
+                setCountryOfOrigin('');
+                updateSearchUrl(query, '');
+              }}
+              aria-label="Clear country filter"
+              className="rounded-full p-1 text-cyan-100/70 transition hover:bg-white/10 hover:text-white"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
+
+        {yearRange.from && yearRange.to && (
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-4 py-2 text-sm text-text">
+            Anime from {yearRange.from}–{yearRange.to}
+            <button
+              type="button"
+              onClick={() => {
+                setYearRange({ from: '', to: '' });
+                const nextParams = new URLSearchParams(params);
+                nextParams.delete('from');
+                nextParams.delete('to');
+                setParams(nextParams, { replace: true });
+              }}
+              className="rounded-full p-1 text-muted transition hover:bg-white/10 hover:text-white"
+              aria-label="Clear era filter"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
 
         {/* Input Field */}
         <div className="relative">
@@ -152,15 +284,15 @@ export default function Search() {
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
-              navigate(`/search?q=${encodeURIComponent(e.target.value)}`, { replace: true });
+              updateSearchUrl(e.target.value);
             }}
-            placeholder="Search by title, romaji, character, or studio..."
+            placeholder="Search anime titles worldwide..."
             className="w-full glass bg-zinc-900/60 border-2 border-white/10 focus:border-primary/80 rounded-full py-4 pl-14 pr-24 text-base text-text outline-none transition-all shadow-2xl placeholder:text-muted/60"
           />
           <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
             {query && (
               <button
-                onClick={() => { setQuery(''); navigate('/search'); }}
+                onClick={() => { setQuery(''); updateSearchUrl(''); }}
                 className="p-1.5 text-muted hover:text-text bg-white/5 rounded-full transition-colors"
                 title="Clear query"
               >
@@ -170,7 +302,7 @@ export default function Search() {
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`p-2 rounded-full border text-xs transition-colors flex items-center gap-1 font-bold ${
-                showFilters || type || status || selectedGenre
+                showFilters || type || status || selectedGenre || countryOfOrigin || yearRange.from
                   ? 'bg-primary text-white border-primary shadow-lg shadow-primary/30'
                   : 'bg-white/5 border-white/10 text-muted hover:text-text'
               }`}
@@ -189,7 +321,7 @@ export default function Search() {
               <button
                 key={g.id}
                 onClick={() => handleGenreToggle(g.id)}
-                className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider transition-all border ${
+                className={`min-h-10 px-3 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all border ${
                   isSelected
                     ? 'bg-primary text-white border-primary shadow-[0_0_15px_rgba(124,58,237,0.4)]'
                     : 'glass border-white/5 text-muted hover:text-text hover:bg-white/5'
@@ -208,55 +340,20 @@ export default function Search() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="mt-6 glass p-5 rounded-2xl border border-white/10 text-left grid grid-cols-1 sm:grid-cols-3 gap-4"
+              className="mt-6 glass p-5 rounded-2xl border border-white/10 text-left grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
             >
-              {/* Type Filter */}
-              <div>
-                <label className="text-[11px] font-bold uppercase tracking-wider text-muted block mb-2">
-                  Format Type
-                </label>
-                <select
-                  value={type}
-                  onChange={(e) => setType(e.target.value)}
-                  className="w-full glass bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs font-semibold text-text outline-none focus:border-primary"
-                >
-                  {TYPE_OPTIONS.map(opt => (
-                    <option key={opt.id} value={opt.id}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Status Filter */}
-              <div>
-                <label className="text-[11px] font-bold uppercase tracking-wider text-muted block mb-2">
-                  Release Status
-                </label>
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  className="w-full glass bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs font-semibold text-text outline-none focus:border-primary"
-                >
-                  {STATUS_OPTIONS.map(opt => (
-                    <option key={opt.id} value={opt.id}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Sort Order */}
-              <div>
-                <label className="text-[11px] font-bold uppercase tracking-wider text-muted block mb-2">
-                  Sort Matrix
-                </label>
-                <select
-                  value={orderBy}
-                  onChange={(e) => setOrderBy(e.target.value)}
-                  className="w-full glass bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs font-semibold text-text outline-none focus:border-primary"
-                >
-                  {SORT_OPTIONS.map(opt => (
-                    <option key={opt.id} value={opt.id}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
+              <FilterSelect
+                label="Anime Origin"
+                value={countryOfOrigin}
+                options={ORIGIN_OPTIONS}
+                onChange={origin => {
+                  setCountryOfOrigin(origin);
+                  updateSearchUrl(query, origin);
+                }}
+              />
+              <FilterSelect label="Format Type" value={type} options={TYPE_OPTIONS} onChange={setType} />
+              <FilterSelect label="Release Status" value={status} options={STATUS_OPTIONS} onChange={setStatus} />
+              <FilterSelect label="Sort Matrix" value={orderBy} options={SORT_OPTIONS} onChange={setOrderBy} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -293,7 +390,10 @@ export default function Search() {
       {/* Results Header */}
       {results.length > 0 && (
         <div className="flex items-center justify-between mb-6 pb-2 border-b border-white/5 text-xs text-muted font-bold uppercase tracking-wider">
-          <span>Displaying {results.length} Titles</span>
+          <span>
+            Displaying {results.length} Titles
+            {countryOfOrigin && ` · ${ORIGIN_OPTIONS.find(option => option.id === countryOfOrigin)?.label || countryOfOrigin}`}
+          </span>
           {query && <span>Matches for "{query}"</span>}
         </div>
       )}
@@ -326,15 +426,29 @@ export default function Search() {
             </div>
           )}
         </>
-      ) : query && !loading ? (
+      ) : (query || countryOfOrigin || yearRange.from) && !loading ? (
         <div className="text-center py-20 text-muted glass rounded-3xl border border-white/5 max-w-lg mx-auto">
           <p className="text-3xl mb-3">🔍</p>
-          <p className="text-xl font-bold text-text mb-2">No results found for "{query}"</p>
+          <p className="text-xl font-bold text-text mb-2">
+            {query
+              ? `No results found for "${query}"`
+              : yearRange.from
+                ? `No anime found from ${yearRange.from}–${yearRange.to}`
+                : 'No anime found for this origin'}
+          </p>
           <p className="text-xs text-muted max-w-sm mx-auto mb-6">
             Try checking spelling, removing active filters, or exploring popular genres below.
           </p>
           <button
-            onClick={() => { setQuery(''); setType(''); setStatus(''); setSelectedGenre(''); }}
+            onClick={() => {
+              setQuery('');
+              setType('');
+              setStatus('');
+              setSelectedGenre('');
+              setCountryOfOrigin('');
+              setYearRange({ from: '', to: '' });
+              setParams(new URLSearchParams(), { replace: true });
+            }}
             className="px-6 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-full text-xs font-bold uppercase tracking-wider transition-colors"
           >
             Reset Filters

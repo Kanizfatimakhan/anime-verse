@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { fetchWithCache } from '../utils/animeApi';
+import { getAnimeGenres } from '../utils/animeApi';
 import { Sparkles, ArrowUpRight, Images } from 'lucide-react';
 
 const STATIC_GENRE_FALLBACK = [
@@ -28,7 +28,7 @@ export default function Genres() {
     let isMounted = true;
     const fetchGenres = async () => {
       try {
-        const data = await fetchWithCache('/genres/anime', 'anime_genres_list', 120);
+        const data = await getAnimeGenres();
         if (isMounted) {
           const validGenres = Array.isArray(data?.data)
             ? data.data.filter(genre => genre && typeof genre.name === 'string' && genre.name.trim() && genre.mal_id != null)
@@ -127,7 +127,7 @@ export default function Genres() {
                     {genre.name}
                   </h3>
                   <p className="text-[10px] text-muted/80 mt-1 font-semibold tracking-wider">
-                    {(genre.count || 0).toLocaleString()} SHOWS
+                    {genre.count ? `${genre.count.toLocaleString()} SHOWS` : 'EXPLORE GENRE'}
                   </p>
                 </div>
               </motion.button>

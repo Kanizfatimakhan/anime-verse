@@ -1,7 +1,13 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getAnimeById, getAnimeCharacters, getAnimeRecommendations, getAnimeMusicVideos } from '../utils/animeApi';
+import {
+  getAnimeById,
+  getAnimeCharacters,
+  getAnimeRecommendations,
+  getAnimeMusicVideos,
+  getAnimeOriginName,
+} from '../utils/animeApi';
 import { useWatchlist } from '../hooks/useWatchlist';
 import { useToast } from '../context/ToastContext';
 import AnimeCard from '../components/AnimeCard';
@@ -56,13 +62,22 @@ function TrailerModal({ youtubeId, title, onClose }) {
           <div className="aspect-video rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-black">
             <iframe
               className="w-full h-full"
-              src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&cc_load_policy=1&cc_lang_pref=en`}
+              src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&rel=0&playsinline=1&cc_load_policy=1&cc_lang_pref=en`}
               title={`${title} Trailer`}
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              referrerPolicy="strict-origin-when-cross-origin"
               allowFullScreen
             />
           </div>
+          <a
+            href={`https://www.youtube.com/watch?v=${youtubeId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-white/75 transition hover:bg-white/10 hover:text-white"
+          >
+            Player not loading? Open on YouTube ↗
+          </a>
         </motion.div>
       </motion.div>
     </AnimatePresence>
@@ -73,8 +88,18 @@ function TrailerModal({ youtubeId, title, onClose }) {
 const PLATFORMS = [
   { name: 'Crunchyroll', color: '#F47521', url: (t) => `https://www.crunchyroll.com/search?q=${t}` },
   { name: 'Netflix', color: '#E50914', url: (t) => `https://www.netflix.com/search?q=${t}` },
-  { name: 'Funimation', color: '#400099', url: (t) => `https://www.funimation.com/search/?q=${t}` },
   { name: 'Amazon Prime', color: '#00A8E0', url: (t) => `https://www.amazon.com/s?k=${t}+anime` },
+];
+
+const STREAMING_REGIONS = [
+  { code: 'in', name: 'India' },
+  { code: 'us', name: 'United States' },
+  { code: 'gb', name: 'United Kingdom' },
+  { code: 'ca', name: 'Canada' },
+  { code: 'au', name: 'Australia' },
+  { code: 'jp', name: 'Japan' },
+  { code: 'kr', name: 'South Korea' },
+  { code: 'tw', name: 'Taiwan' },
 ];
 
 export default function AnimeDetail() {
@@ -85,6 +110,7 @@ export default function AnimeDetail() {
   const [loading, setLoading] = useState(true);
   const [showTrailer, setShowTrailer] = useState(false);
   const [showPlatforms, setShowPlatforms] = useState(false);
+  const [streamingRegion, setStreamingRegion] = useState('in');
   const [showStatusPicker, setShowStatusPicker] = useState(false);
   const [activeMediaTab, setActiveMediaTab] = useState('trailer'); // 'trailer' | 'ost' | 'watch'
   const [musicVideos, setMusicVideos] = useState([]);
@@ -234,6 +260,10 @@ export default function AnimeDetail() {
   const trailerYoutubeId = anime.trailer?.youtube_id;
   const ytSearchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(title + ' trailer')}`;
   const encodedTitle = encodeURIComponent(title);
+  const trailerUrl = trailerYoutubeId
+    ? anime.trailer.url || `https://www.youtube.com/watch?v=${trailerYoutubeId}`
+    : ytSearchUrl;
+  const justWatchUrl = `https://www.justwatch.com/${streamingRegion}/search?q=${encodedTitle}`;
 
   return (
     <>
@@ -248,7 +278,7 @@ export default function AnimeDetail() {
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pb-24 relative">
         {/* ── Cinematic Hero Banner ── */}
-        <div ref={bannerRef} className="relative h-[65vh] md:h-[75vh] w-full overflow-hidden">
+        <div ref={bannerRef} className="relative min-h-[min(65vh,520px)] w-full overflow-hidden md:h-[75vh]">
           <img
             src={bannerImage}
             alt={title}
@@ -257,7 +287,7 @@ export default function AnimeDetail() {
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-transparent to-transparent hidden md:block" />
 
-          <div className="absolute bottom-0 left-0 right-0 max-w-7xl mx-auto px-6 pb-10 flex items-end gap-8 z-10">
+          <div className="relative z-10 mx-auto mt-24 flex max-w-7xl flex-col items-start gap-5 px-4 pb-8 sm:px-6 md:absolute md:bottom-0 md:left-0 md:right-0 md:mt-0 md:flex-row md:items-end md:gap-8 md:pb-10">
             {/* 3D Poster */}
             <motion.div
               ref={posterRef}
@@ -274,7 +304,7 @@ export default function AnimeDetail() {
               initial={{ y: 50, opacity: 0 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.25 }}
-              className="flex-1 min-w-0"
+              className="w-full min-w-0 md:flex-1"
             >
               <h1 className="text-3xl md:text-5xl font-black tracking-tight text-text mb-1 leading-tight">
                 {title}
@@ -301,6 +331,7 @@ export default function AnimeDetail() {
                   </span>
                 )}
                 {anime.year && <span className="bg-white/5 text-muted px-3 py-1 rounded-full">{anime.year}</span>}
+                {anime.country_of_origin && <span className="bg-white/5 text-muted px-3 py-1 rounded-full">{getAnimeOriginName(anime.country_of_origin)}</span>}
                 {anime.episodes && <span className="bg-white/5 text-muted px-3 py-1 rounded-full">{anime.episodes} Eps</span>}
                 {anime.status && <span className="bg-white/5 text-muted px-3 py-1 rounded-full">{anime.status}</span>}
               </div>
@@ -308,31 +339,35 @@ export default function AnimeDetail() {
               {/* Action Buttons Bar */}
               <div className="flex flex-wrap items-center gap-3">
                 {/* 🎬 Trailer Button */}
-                {trailerYoutubeId ? (
-                  <button
-                    onClick={() => setShowTrailer(true)}
-                    className="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-full font-bold uppercase tracking-wider flex items-center gap-2 transition-all text-xs shadow-[0_0_25px_rgba(220,38,38,0.4)] hover:scale-105"
-                  >
-                    <Play className="w-4 h-4 fill-white" /> Watch Trailer
-                  </button>
-                ) : (
-                  <a
-                    href={ytSearchUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-5 py-2.5 bg-red-600/80 hover:bg-red-600 text-white rounded-full font-bold uppercase tracking-wider flex items-center gap-2 transition-all text-xs"
-                  >
-                    <Play className="w-4 h-4 fill-white" /> Search Trailer
-                  </a>
-                )}
+                <a
+                  href={trailerUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-full font-bold uppercase tracking-wider flex items-center gap-2 transition-all text-xs shadow-[0_0_25px_rgba(220,38,38,0.4)] hover:scale-105"
+                >
+                  <Play className="w-4 h-4 fill-white" />
+                  {trailerYoutubeId ? 'Watch Trailer' : 'Find Trailer'}
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
 
                 {/* 📺 Stream Platforms Dropdown */}
-                <div className="relative">
+                <div className="relative flex items-center">
+                  <a
+                    href={justWatchUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-5 py-2.5 bg-[#F47521] hover:bg-[#F47521]/90 text-white rounded-l-full font-bold uppercase tracking-wider flex items-center gap-2 transition-all text-xs shadow-[0_0_25px_rgba(244,117,33,0.35)]"
+                  >
+                    <Tv className="w-4 h-4" /> Find Where to Watch
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
                   <button
                     onClick={() => setShowPlatforms(!showPlatforms)}
-                    className="px-5 py-2.5 bg-[#F47521] hover:bg-[#F47521]/90 text-white rounded-full font-bold uppercase tracking-wider flex items-center gap-2 transition-all text-xs shadow-[0_0_25px_rgba(244,117,33,0.35)] hover:scale-105"
+                    aria-label="Choose a streaming region"
+                    aria-expanded={showPlatforms}
+                    className="rounded-r-full border-l border-white/20 bg-[#F47521] px-3 py-2.5 text-white transition hover:bg-[#F47521]/90"
                   >
-                    <Tv className="w-4 h-4" /> Watch On ▾
+                    <ChevronDown className={`h-4 w-4 transition-transform ${showPlatforms ? 'rotate-180' : ''}`} />
                   </button>
 
                   <AnimatePresence>
@@ -341,8 +376,34 @@ export default function AnimeDetail() {
                         initial={{ opacity: 0, y: 8, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                        className="absolute left-0 top-12 z-50 w-52 rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-zinc-950/95 backdrop-blur-2xl"
+                        className="absolute left-0 top-full z-50 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-zinc-950/95 backdrop-blur-2xl"
                       >
+                        <p className="px-4 py-3 text-[10px] leading-4 text-white/55">
+                          Search platform catalogs. Availability varies by country and isn’t verified here.
+                        </p>
+                        <div className="border-y border-white/5 px-4 py-3">
+                          <label htmlFor="streaming-region" className="mb-2 block text-[10px] font-bold uppercase tracking-wider text-white/50">
+                            Check a region
+                          </label>
+                          <select
+                            id="streaming-region"
+                            value={streamingRegion}
+                            onChange={event => setStreamingRegion(event.target.value)}
+                            className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-xs font-semibold text-white [color-scheme:dark] outline-none focus:border-primary"
+                          >
+                            {STREAMING_REGIONS.map(region => (
+                              <option key={region.code} value={region.code}>{region.name}</option>
+                            ))}
+                          </select>
+                          <a
+                            href={justWatchUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2 block rounded-lg bg-primary/15 px-3 py-2 text-center text-xs font-bold text-violet-100 transition hover:bg-primary/25"
+                          >
+                            Check on JustWatch ↗
+                          </a>
+                        </div>
                         {PLATFORMS.map(p => (
                           <a
                             key={p.name}
@@ -459,7 +520,7 @@ export default function AnimeDetail() {
 
             {/* In-App Interactive Media Center (Trailer / OST / Clips) */}
             <div className="mb-12 glass p-5 rounded-3xl border border-white/10 bg-zinc-900/40">
-              <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
+              <div className="mb-6 flex flex-col items-start gap-4 border-b border-white/10 pb-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-2">
                   <Film className="w-5 h-5 text-accent" />
                   <h2 className="text-lg font-black uppercase tracking-tight text-white">
@@ -468,10 +529,10 @@ export default function AnimeDetail() {
                 </div>
 
                 {/* Media Switcher Tabs */}
-                <div className="flex items-center gap-1 bg-black/40 p-1 rounded-full border border-white/5">
+                <div className="flex max-w-full items-center gap-1 rounded-full border border-white/5 bg-black/40 p-1">
                   <button
                     onClick={() => setActiveMediaTab('trailer')}
-                    className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
+                    className={`min-h-10 px-3 py-2 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all ${
                       activeMediaTab === 'trailer'
                         ? 'bg-primary text-white shadow-md'
                         : 'text-muted hover:text-white'
@@ -481,7 +542,7 @@ export default function AnimeDetail() {
                   </button>
                   <button
                     onClick={() => setActiveMediaTab('ost')}
-                    className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1 ${
+                    className={`min-h-10 px-3 py-2 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1 ${
                       activeMediaTab === 'ost'
                         ? 'bg-accent text-zinc-950 font-black shadow-md'
                         : 'text-muted hover:text-white'
@@ -495,27 +556,41 @@ export default function AnimeDetail() {
               {/* Tab 1: Video Trailer Player */}
               {activeMediaTab === 'trailer' && (
                 <div>
+                  <p className="mb-3 text-xs text-white/50">
+                    Trailers are hosted by YouTube. If playback is blocked, open the trailer there.
+                  </p>
                   {trailerYoutubeId ? (
-                    <div className="rounded-2xl overflow-hidden border border-white/5 shadow-2xl aspect-video relative bg-black">
-                      <iframe
-                        className="absolute inset-0 w-full h-full"
-                        src={`https://www.youtube.com/embed/${trailerYoutubeId}?cc_load_policy=1&cc_lang_pref=en`}
-                        title={`${title} Official Trailer`}
-                        frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      />
+                    <div>
+                      <div className="relative aspect-video overflow-hidden rounded-2xl border border-white/5 bg-black shadow-2xl">
+                        <iframe
+                          className="absolute inset-0 h-full w-full"
+                          src={anime.trailer.embed_url || `https://www.youtube-nocookie.com/embed/${trailerYoutubeId}?rel=0&playsinline=1`}
+                          title={`${title} Official Trailer`}
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          referrerPolicy="strict-origin-when-cross-origin"
+                          allowFullScreen
+                        />
+                      </div>
+                      <a
+                        href={anime.trailer.url || `https://www.youtube.com/watch?v=${trailerYoutubeId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-white/75 transition hover:bg-white/10 hover:text-white"
+                      >
+                        <Play className="h-3.5 w-3.5" /> Open trailer on YouTube ↗
+                      </a>
                     </div>
                   ) : (
-                    <div className="py-12 text-center text-muted">
-                      <p className="text-sm">Trailer unavailable directly. Search YouTube below:</p>
+                    <div className="rounded-2xl border border-white/5 bg-black/30 px-5 py-10 text-center text-muted">
+                      <p className="text-sm">No playable trailer is listed for this title yet.</p>
                       <a
                         href={ytSearchUrl}
                         target="_blank"
-                        rel="noreferrer"
-                        className="mt-3 inline-flex items-center gap-2 px-5 py-2 bg-red-600 text-white rounded-full text-xs font-bold uppercase tracking-wider"
+                        rel="noopener noreferrer"
+                        className="mt-4 inline-flex items-center gap-2 rounded-full bg-red-600 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-red-500"
                       >
-                        <Play className="w-3.5 h-3.5 fill-white" /> Search on YouTube
+                        <Play className="h-3.5 w-3.5 fill-white" /> Find trailer on YouTube
                       </a>
                     </div>
                   )}
@@ -710,6 +785,7 @@ export default function AnimeDetail() {
               <div className="space-y-3">
                 {[
                   { label: 'Type', value: anime.type },
+                  { label: 'Origin', value: getAnimeOriginName(anime.country_of_origin) },
                   { label: 'Episodes', value: anime.episodes || 'Unknown' },
                   { label: 'Duration', value: anime.duration },
                   { label: 'Status', value: anime.status },

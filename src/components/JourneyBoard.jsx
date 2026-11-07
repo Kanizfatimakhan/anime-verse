@@ -1,6 +1,7 @@
 import { ArrowRight, BookOpen, CheckCircle2, Play, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useWatchlist } from '../hooks/useWatchlist';
+import { getAnimeRouteId } from '../utils/animeApi';
 
 export default function JourneyBoard() {
   const { watchlist } = useWatchlist();
@@ -42,7 +43,7 @@ export default function JourneyBoard() {
 
         {continueAnime ? (
           <Link
-            to={`/anime/${continueAnime.mal_id}`}
+            to={`/anime/${getAnimeRouteId(continueAnime)}`}
             className="group flex min-h-20 items-center gap-3 rounded-2xl border border-violet-200/15 bg-violet-300/[0.06] p-3.5 transition hover:border-violet-200/35 hover:bg-violet-300/[0.1] sm:min-w-64 sm:p-4"
           >
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-300 text-zinc-950">

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Bookmark, Images, Star } from 'lucide-react';
 import { useWatchlist } from '../hooks/useWatchlist';
 import { SEED_ANIME_LIST } from '../data/animeSeedData';
+import { getAnimeRouteId } from '../utils/animeApi';
 
 const FEATURED_IDS = [52991, 5114, 40748, 16498, 38000, 9253, 1535, 32281];
 const FEATURED_ANIME = FEATURED_IDS
@@ -20,7 +21,7 @@ function AnimePoster({ anime, onSelect }) {
   return (
     <button
       type="button"
-      onClick={() => onSelect(anime.mal_id)}
+      onClick={() => onSelect(getAnimeRouteId(anime))}
       className="group relative w-full overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 text-left transition duration-300 hover:-translate-y-1 hover:border-primary/60 hover:shadow-[0_16px_50px_rgba(124,58,237,0.2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
     >
       <div className="relative aspect-[2/3] overflow-hidden bg-gradient-to-br from-primary/30 via-zinc-900 to-accent/20">
