@@ -1,0 +1,113 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --primary: #8B5CF6;
+    --accent: #67E8F9;
+    --bg: #08080D;
+    --glass: rgba(255, 255, 255, 0.035);
+    --glass-strong: rgba(255, 255, 255, 0.07);
+    --text: #FFFFFF;
+    --muted: #94A3B8;
+    --border: rgba(255, 255, 255, 0.09);
+  }
+
+  html, body, #root {
+    width: 100%;
+    overflow-x: clip;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, sans-serif;
+    /* subtle background texture */
+    background-image:
+      radial-gradient(ellipse at 50% -20%, rgba(124, 58, 237, 0.12), transparent 48%),
+      linear-gradient(180deg, #09090f 0%, #08080d 55%, #09090f 100%);
+  }
+}
+
+@layer utilities {
+  .glass {
+    background: var(--glass);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+  }
+
+  .page-container {
+    width: min(100% - 2rem, 80rem);
+    margin-inline: auto;
+  }
+
+  @media (min-width: 640px) {
+    .page-container {
+      width: min(100% - 3rem, 80rem);
+    }
+  }
+
+  .section-heading {
+    font-size: clamp(1.25rem, 2.4vw, 1.75rem);
+    font-weight: 650;
+    letter-spacing: -0.035em;
+    line-height: 1.15;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 10px;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 10px;
+}
+
+/* Lenis smooth scroll */
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}

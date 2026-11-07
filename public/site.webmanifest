@@ -1,0 +1,16 @@
+{
+  "name": "AnimeVerse",
+  "short_name": "AnimeVerse",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#06141F",
+  "theme_color": "#00A8E8",
+  "icons": [
+    {
+      "src": "/favicon-32.png",
+      "sizes": "360x360",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
